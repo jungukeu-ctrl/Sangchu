@@ -1,0 +1,901 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>상추훈련 판단 가이드</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Noto+Sans+KR:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #080808;
+    --bg-2: #111111;
+    --bg-3: #181818;
+    --bg-4: #202020;
+    --border: rgba(255,255,255,0.07);
+    --border-2: rgba(255,255,255,0.12);
+    --text-1: #f0ede8;
+    --text-2: #888;
+    --text-3: #444;
+    --red: #e24b4a;
+    --red-bg: rgba(226,75,74,0.08);
+    --red-border: rgba(226,75,74,0.2);
+    --blue: #5b9bd5;
+    --blue-bg: rgba(91,155,213,0.08);
+    --blue-border: rgba(91,155,213,0.2);
+    --amber: #d4a017;
+    --amber-bg: rgba(212,160,23,0.08);
+    --amber-border: rgba(212,160,23,0.2);
+    --green: #4caf7d;
+    --green-bg: rgba(76,175,125,0.08);
+    --green-border: rgba(76,175,125,0.2);
+    --purple: #8b7fd4;
+    --radius: 8px;
+    --radius-lg: 12px;
+    --mono: 'IBM Plex Mono', monospace;
+    --sans: 'Noto Sans KR', sans-serif;
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: var(--sans);
+    background: var(--bg);
+    color: var(--text-1);
+    min-height: 100vh;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ── Layout ── */
+  .shell {
+    max-width: 680px;
+    margin: 0 auto;
+    padding: 0 16px 60px;
+  }
+
+  /* ── Header ── */
+  .site-header {
+    padding: 32px 0 28px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 28px;
+  }
+  .site-header-inner {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  .logo-mark {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text-3);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+  .site-title {
+    font-size: 22px;
+    font-weight: 600;
+    color: var(--text-1);
+    letter-spacing: -0.3px;
+  }
+  .site-badge {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--purple);
+    border: 1px solid rgba(139,127,212,0.3);
+    border-radius: 99px;
+    padding: 3px 10px;
+    letter-spacing: .5px;
+    white-space: nowrap;
+    align-self: flex-start;
+    margin-top: 6px;
+  }
+
+  /* ── Tabs ── */
+  .tabs {
+    display: flex;
+    gap: 2px;
+    margin-bottom: 24px;
+    border-bottom: 1px solid var(--border);
+  }
+  .tab {
+    padding: 10px 16px;
+    font-size: 13px;
+    font-family: var(--sans);
+    color: var(--text-3);
+    cursor: pointer;
+    background: none;
+    border: none;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
+    transition: color .15s, border-color .15s;
+    letter-spacing: .2px;
+  }
+  .tab:hover { color: var(--text-2); }
+  .tab.active {
+    color: var(--text-1);
+    border-bottom-color: var(--text-1);
+  }
+  .panel { display: none; }
+  .panel.active { display: block; }
+
+  /* ── Progress ── */
+  .progress {
+    display: flex;
+    gap: 4px;
+    margin-bottom: 24px;
+  }
+  .p-dot {
+    height: 2px;
+    flex: 1;
+    border-radius: 2px;
+    background: var(--bg-4);
+    transition: background .3s;
+  }
+  .p-dot.done { background: var(--text-1); }
+  .p-dot.current { background: var(--text-3); }
+
+  /* ── Step ── */
+  .step { display: none; }
+  .step.visible { display: block; animation: fadeUp .25s ease; }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .step-eyebrow {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--text-3);
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+  }
+  .step-question {
+    font-size: 17px;
+    font-weight: 500;
+    color: var(--text-1);
+    margin-bottom: 14px;
+    letter-spacing: -.2px;
+  }
+
+  /* ── Options ── */
+  .opts { display: flex; flex-direction: column; gap: 6px; }
+  .opt {
+    padding: 12px 16px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    cursor: pointer;
+    font-size: 13px;
+    font-family: var(--sans);
+    color: var(--text-2);
+    text-align: left;
+    background: var(--bg-2);
+    transition: border-color .12s, color .12s, background .12s;
+    line-height: 1.4;
+  }
+  .opt:hover {
+    border-color: var(--border-2);
+    color: var(--text-1);
+    background: var(--bg-3);
+  }
+  .opt.selected {
+    border-color: rgba(255,255,255,0.3);
+    color: var(--text-1);
+    background: var(--bg-3);
+  }
+  .opt-sub {
+    font-size: 11px;
+    color: var(--text-3);
+    margin-top: 2px;
+    font-family: var(--mono);
+  }
+
+  /* ── Price input ── */
+  .price-inputs {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 12px;
+  }
+  .price-field label {
+    display: block;
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--text-3);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+  .price-field input {
+    width: 100%;
+    padding: 10px 12px;
+    background: var(--bg-2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    font-size: 15px;
+    font-family: var(--mono);
+    color: var(--text-1);
+    outline: none;
+    transition: border-color .15s;
+    -moz-appearance: textfield;
+  }
+  .price-field input::-webkit-outer-spin-button,
+  .price-field input::-webkit-inner-spin-button { -webkit-appearance: none; }
+  .price-field input:focus { border-color: var(--border-2); }
+  .price-field input::placeholder { color: var(--text-3); }
+
+  .diff-display {
+    padding: 12px 16px;
+    border-radius: var(--radius);
+    background: var(--bg-3);
+    border: 1px solid var(--border);
+    margin-bottom: 14px;
+    min-height: 52px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    transition: border-color .2s;
+  }
+  .diff-display.profit { border-color: var(--green-border); background: var(--green-bg); }
+  .diff-display.break  { border-color: var(--border); }
+  .diff-display.loss-s { border-color: var(--amber-border); background: var(--amber-bg); }
+  .diff-display.loss-d { border-color: var(--red-border); background: var(--red-bg); }
+
+  .diff-pct {
+    font-family: var(--mono);
+    font-size: 20px;
+    font-weight: 500;
+    min-width: 80px;
+  }
+  .diff-pct.profit { color: var(--green); }
+  .diff-pct.break  { color: var(--text-2); }
+  .diff-pct.loss-s { color: var(--amber); }
+  .diff-pct.loss-d { color: var(--red); }
+
+  .diff-meta { font-size: 12px; color: var(--text-2); line-height: 1.5; }
+  .diff-zone { font-size: 11px; font-weight: 500; margin-top: 2px; }
+  .diff-zone.profit { color: var(--green); }
+  .diff-zone.break  { color: var(--text-2); }
+  .diff-zone.loss   { color: var(--amber); }
+  .diff-zone.lossd  { color: var(--red); }
+
+  .placeholder-text {
+    font-size: 13px;
+    color: var(--text-3);
+  }
+
+  /* ── Next button ── */
+  .next-btn {
+    padding: 11px 20px;
+    border: 1px solid var(--border-2);
+    border-radius: var(--radius);
+    font-size: 13px;
+    font-family: var(--sans);
+    color: var(--text-1);
+    background: var(--bg-3);
+    cursor: pointer;
+    transition: background .12s, opacity .12s;
+    font-weight: 500;
+  }
+  .next-btn:hover:not(:disabled) { background: var(--bg-4); }
+  .next-btn:disabled { opacity: .3; cursor: not-allowed; }
+
+  /* ── Result ── */
+  .result-card {
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--border);
+    padding: 20px;
+    background: var(--bg-2);
+    animation: fadeUp .3s ease;
+    margin-top: 4px;
+  }
+  .result-card.r-buy  { border-color: var(--red-border); }
+  .result-card.r-sell { border-color: var(--blue-border); }
+  .result-card.r-warn { border-color: var(--amber-border); }
+
+  .result-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 12px;
+    border-radius: 99px;
+    font-size: 11px;
+    font-family: var(--mono);
+    letter-spacing: .5px;
+    font-weight: 500;
+    margin-bottom: 12px;
+  }
+  .r-pill-buy  { background: var(--red-bg); color: var(--red); border: 1px solid var(--red-border); }
+  .r-pill-sell { background: var(--blue-bg); color: var(--blue); border: 1px solid var(--blue-border); }
+  .r-pill-watch{ background: var(--bg-4); color: var(--text-2); border: 1px solid var(--border); }
+  .r-pill-warn { background: var(--amber-bg); color: var(--amber); border: 1px solid var(--amber-border); }
+
+  .result-action {
+    font-size: 19px;
+    font-weight: 600;
+    color: var(--text-1);
+    margin-bottom: 8px;
+    letter-spacing: -.3px;
+    line-height: 1.3;
+  }
+  .result-sub {
+    font-size: 13px;
+    color: var(--text-2);
+    line-height: 1.7;
+    margin-bottom: 14px;
+  }
+  .result-why {
+    font-size: 12px;
+    color: var(--text-3);
+    border-top: 1px solid var(--border);
+    padding-top: 12px;
+    line-height: 1.6;
+    font-family: var(--mono);
+  }
+  .result-why span { color: var(--text-2); }
+
+  .reset-btn {
+    margin-top: 16px;
+    padding: 8px 16px;
+    font-size: 12px;
+    font-family: var(--sans);
+    color: var(--text-3);
+    background: none;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    cursor: pointer;
+    transition: color .12s, border-color .12s;
+  }
+  .reset-btn:hover { color: var(--text-2); border-color: var(--border-2); }
+
+  /* ── ABC ── */
+  .abc-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    margin-bottom: 14px;
+  }
+  .abc-card {
+    padding: 18px 16px;
+    background: var(--bg-2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+  }
+  .abc-letter {
+    font-family: var(--mono);
+    font-size: 32px;
+    font-weight: 500;
+    line-height: 1;
+    margin-bottom: 10px;
+  }
+  .abc-letter.a { color: var(--text-3); }
+  .abc-letter.b { color: var(--red); }
+  .abc-letter.c { color: var(--blue); }
+  .abc-name {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-1);
+    margin-bottom: 6px;
+  }
+  .abc-desc {
+    font-size: 12px;
+    color: var(--text-2);
+    line-height: 1.6;
+    margin-bottom: 10px;
+  }
+  .abc-when {
+    font-size: 11px;
+    color: var(--text-3);
+    border-top: 1px solid var(--border);
+    padding-top: 8px;
+    line-height: 1.6;
+  }
+  .note-box {
+    padding: 12px 16px;
+    border-radius: var(--radius);
+    font-size: 12px;
+    line-height: 1.7;
+    color: var(--text-2);
+  }
+  .note-box.info { background: var(--blue-bg); border: 1px solid var(--blue-border); }
+  .note-box.warn { background: var(--amber-bg); border: 1px solid var(--amber-border); }
+  .note-box strong { color: var(--text-1); font-weight: 500; }
+
+  /* ── Calc ── */
+  .calc-intro {
+    font-size: 13px;
+    color: var(--text-2);
+    line-height: 1.7;
+    margin-bottom: 20px;
+    padding: 12px 16px;
+    background: var(--bg-2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+  }
+  .calc-intro strong { color: var(--text-1); font-weight: 500; }
+  .calc-inputs {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 8px;
+    flex-wrap: wrap;
+  }
+  .calc-field { display: flex; flex-direction: column; gap: 5px; }
+  .calc-field label {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--text-3);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+  .calc-field input {
+    padding: 9px 12px;
+    background: var(--bg-2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    font-size: 14px;
+    font-family: var(--mono);
+    color: var(--text-1);
+    outline: none;
+    width: 140px;
+    transition: border-color .15s;
+    -moz-appearance: textfield;
+  }
+  .calc-field input::-webkit-outer-spin-button,
+  .calc-field input::-webkit-inner-spin-button { -webkit-appearance: none; }
+  .calc-field input:focus { border-color: var(--border-2); }
+
+  .drop-info {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text-3);
+    margin-bottom: 14px;
+    min-height: 16px;
+  }
+
+  .retrace-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    margin-bottom: 14px;
+  }
+  .retrace-card {
+    padding: 14px;
+    background: var(--bg-2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+  }
+  .retrace-card:nth-child(1) { border-color: var(--border); }
+  .retrace-card:nth-child(2) { border-color: var(--amber-border); background: var(--amber-bg); }
+  .retrace-card:nth-child(3) { border-color: var(--blue-border); background: var(--blue-bg); }
+  .retrace-pct {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text-3);
+    margin-bottom: 5px;
+  }
+  .retrace-card:nth-child(2) .retrace-pct { color: var(--amber); }
+  .retrace-card:nth-child(3) .retrace-pct { color: var(--blue); }
+  .retrace-price {
+    font-family: var(--mono);
+    font-size: 19px;
+    font-weight: 500;
+    color: var(--text-1);
+    margin-bottom: 5px;
+  }
+  .retrace-desc {
+    font-size: 11px;
+    color: var(--text-3);
+    line-height: 1.5;
+  }
+  .retrace-card:nth-child(2) .retrace-desc { color: var(--amber); opacity: .8; }
+  .retrace-card:nth-child(3) .retrace-desc { color: var(--blue); opacity: .8; }
+
+  /* ── Footer ── */
+  .footer {
+    margin-top: 48px;
+    padding-top: 20px;
+    border-top: 1px solid var(--border);
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--text-3);
+    letter-spacing: .5px;
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  /* ── Responsive ── */
+  @media (max-width: 480px) {
+    .abc-grid { grid-template-columns: 1fr; }
+    .retrace-grid { grid-template-columns: 1fr; }
+    .price-inputs { grid-template-columns: 1fr; }
+    .site-title { font-size: 19px; }
+    .result-action { font-size: 16px; }
+  }
+</style>
+</head>
+<body>
+<div class="shell">
+
+  <header class="site-header">
+    <div class="site-header-inner">
+      <div>
+        <div class="logo-mark">SANGCHU TRAINING</div>
+        <div class="site-title">상추훈련 판단 가이드</div>
+      </div>
+      <div class="site-badge">초보 기준비중 30%</div>
+    </div>
+  </header>
+
+  <div class="tabs">
+    <button class="tab active" onclick="showTab('tree', this)">판단 트리</button>
+    <button class="tab" onclick="showTab('abc', this)">A / B / C</button>
+    <button class="tab" onclick="showTab('calc', this)">되돌림 계산기</button>
+  </div>
+
+  <!-- ── TAB 1: 판단 트리 ── -->
+  <div id="tab-tree" class="panel active">
+
+    <div class="progress">
+      <div class="p-dot current" id="d0"></div>
+      <div class="p-dot" id="d1"></div>
+      <div class="p-dot" id="d2"></div>
+    </div>
+
+    <!-- Step 1 -->
+    <div id="step0" class="step visible">
+      <div class="step-eyebrow">STEP 1 / 3</div>
+      <div class="step-question">지금 보유 비중은?</div>
+      <div class="opts">
+        <button class="opt" onclick="pickWeight(0)">
+          0 ~ 10%
+          <div class="opt-sub">거의 비어있음 — 기준비중 크게 미달</div>
+        </button>
+        <button class="opt" onclick="pickWeight(1)">
+          10 ~ 25%
+          <div class="opt-sub">적정 이하 — 기준비중(30%) 미달</div>
+        </button>
+        <button class="opt" onclick="pickWeight(2)">
+          25 ~ 30%
+          <div class="opt-sub">기준비중 근처 — 거의 찼음</div>
+        </button>
+        <button class="opt" onclick="pickWeight(3)">
+          30% 이상
+          <div class="opt-sub">초과 / 과비중 — 기준 넘어섬</div>
+        </button>
+      </div>
+    </div>
+
+    <!-- Step 2 -->
+    <div id="step1" class="step">
+      <div class="step-eyebrow">STEP 2 / 3</div>
+      <div class="step-question">평단가와 현재 주가를 입력하세요</div>
+      <div class="price-inputs">
+        <div class="price-field">
+          <label>평단가 (원)</label>
+          <input type="number" id="avg-price" placeholder="4000" oninput="calcDiff()">
+        </div>
+        <div class="price-field">
+          <label>현재 주가 (원)</label>
+          <input type="number" id="cur-price" placeholder="3750" oninput="calcDiff()">
+        </div>
+      </div>
+      <div class="diff-display" id="diff-display">
+        <span class="placeholder-text">위에 숫자를 입력하면 자동 계산됩니다</span>
+      </div>
+      <button class="next-btn" id="next-btn" onclick="goStep2()" disabled>다음 단계로 →</button>
+    </div>
+
+    <!-- Step 3 -->
+    <div id="step2" class="step">
+      <div class="step-eyebrow">STEP 3 / 3</div>
+      <div class="step-question">오늘 장 흐름은?</div>
+      <div class="opts">
+        <button class="opt" onclick="pickFlow(0)">
+          상승 흐름
+          <div class="opt-sub">양봉 · 거래량 증가 · 강한 흐름</div>
+        </button>
+        <button class="opt" onclick="pickFlow(1)">
+          횡보
+          <div class="opt-sub">방향성 없음 · 거래량 미미</div>
+        </button>
+        <button class="opt" onclick="pickFlow(2)">
+          하락 흐름
+          <div class="opt-sub">음봉 · 거래량 증가 · 약세</div>
+        </button>
+      </div>
+    </div>
+
+    <!-- Result -->
+    <div id="result" style="display:none;"></div>
+
+  </div>
+
+  <!-- ── TAB 2: A/B/C ── -->
+  <div id="tab-abc" class="panel">
+    <div class="abc-grid">
+      <div class="abc-card">
+        <div class="abc-letter a">A</div>
+        <div class="abc-name">관찰</div>
+        <div class="abc-desc">아무것도 안 한다. 매수도, 매도도 0%. 시장을 지켜보는 것.</div>
+        <div class="abc-when">쓸 때: 방향성 불명확 · 비중 적정 · 애매하면 기본값</div>
+      </div>
+      <div class="abc-card">
+        <div class="abc-letter b">B</div>
+        <div class="abc-name">분할매수</div>
+        <div class="abc-desc">1~2%씩 나눠서 산다. 한 번에 몰아서 사지 않는다.</div>
+        <div class="abc-when">쓸 때: 비중 부족 · 평단 낮출 수 있는 가격 · 1번 박스 워밍업</div>
+      </div>
+      <div class="abc-card">
+        <div class="abc-letter c">C</div>
+        <div class="abc-name">매도섞기</div>
+        <div class="abc-desc">매도를 섞어준다. 수익 매도도, 비중 다이어트 손실매도도 C다.</div>
+        <div class="abc-when">쓸 때: 수익권 +1% 이상 · 비중 초과 · 반등 파동 손실 다이어트</div>
+      </div>
+    </div>
+    <div class="note-box info">
+      C는 수익일 때만 파는 게 아니다. <strong>비중이 무거울 때 반등을 이용해 조금씩 덜어내는 손실매도도 C</strong>다. 손해를 확정하는 게 아니라 비중을 다이어트하는 것.
+    </div>
+  </div>
+
+  <!-- ── TAB 3: 되돌림 계산기 ── -->
+  <div id="tab-calc" class="panel">
+    <div class="calc-intro">
+      되돌림(Retracement) = <strong>하락폭의 X%를 회복한 가격</strong>.<br>
+      "저가 대비 X% 상승"이 아님.<br><br>
+      예: 고점 5,000원 → 저점 4,000원 (하락폭 1,000원)<br>
+      30% 되돌림 = 4,000 + 1,000 × 0.3 = <strong>4,300원</strong>
+    </div>
+    <div class="calc-inputs">
+      <div class="calc-field">
+        <label>고점 (원)</label>
+        <input type="number" id="c-high" value="5000" oninput="calcRetrace()">
+      </div>
+      <div class="calc-field">
+        <label>저점 (원)</label>
+        <input type="number" id="c-low" value="4000" oninput="calcRetrace()">
+      </div>
+    </div>
+    <div class="drop-info" id="c-drop"></div>
+    <div class="retrace-grid" id="c-result"></div>
+    <div class="note-box warn">
+      <strong>손실매도 타이밍 기준</strong><br>
+      30% 도달 → 1% 소량 시작 가능<br>
+      50% 도달 → 1~2% 적극 실행 (땡큐 구간)<br>
+      75%+ 도달 → 손실매도 + 수익매도 병행
+    </div>
+  </div>
+
+  <footer class="footer">
+    <span>상추훈련 판단 가이드 · 초보 기준비중 30%</span>
+    <span>BUILD-UP TRADING SYSTEM</span>
+  </footer>
+
+</div>
+
+<script>
+const state = { w: null, p: null, f: null };
+let priceZone = null;
+
+/* ── Tab ── */
+function showTab(id, el) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + id).classList.add('active');
+  el.classList.add('active');
+}
+
+/* ── Progress ── */
+function setDots(done, current) {
+  [0,1,2].forEach(i => {
+    const d = document.getElementById('d'+i);
+    d.className = 'p-dot' + (i < done ? ' done' : i === current ? ' current' : '');
+  });
+}
+
+/* ── Step 1: Weight ── */
+function pickWeight(val) {
+  state.w = val;
+  document.querySelectorAll('#step0 .opt').forEach((o,i) => o.classList.toggle('selected', i===val));
+  setTimeout(() => {
+    document.getElementById('step0').classList.remove('visible');
+    const s1 = document.getElementById('step1');
+    s1.classList.add('visible');
+    setDots(1, 1);
+  }, 180);
+}
+
+/* ── Step 2: Price ── */
+function calcDiff() {
+  const avg = parseFloat(document.getElementById('avg-price').value);
+  const cur = parseFloat(document.getElementById('cur-price').value);
+  const el = document.getElementById('diff-display');
+  const btn = document.getElementById('next-btn');
+
+  if (!avg || !cur || avg <= 0 || cur <= 0) {
+    el.className = 'diff-display';
+    el.innerHTML = '<span class="placeholder-text">위에 숫자를 입력하면 자동 계산됩니다</span>';
+    btn.disabled = true;
+    priceZone = null;
+    return;
+  }
+
+  const diff = ((cur - avg) / avg) * 100;
+  const sign = diff >= 0 ? '+' : '';
+  const diffStr = sign + diff.toFixed(1) + '%';
+
+  let cls, pctCls, zone, zoneCls, desc;
+  if (diff >= 1) {
+    cls='profit'; pctCls='profit'; zone='수익권'; zoneCls='profit';
+    desc='평단 대비 +1% 이상 수익 상태 → C 매도섞기 우선';
+    priceZone = 0;
+  } else if (diff >= -1) {
+    cls='break'; pctCls='break'; zone='보합권'; zoneCls='break';
+    desc='평단 근처 ±1% 이내 → 상황 보며 판단';
+    priceZone = 1;
+  } else if (diff >= -3) {
+    cls='loss-s'; pctCls='loss-s'; zone='손실권 (소폭)'; zoneCls='loss';
+    desc='-1% ~ -3% 손실 상태 → 추매 전 평단 계산 필수';
+    priceZone = 2;
+  } else {
+    cls='loss-d'; pctCls='loss-d'; zone='손실권 (심화)'; zoneCls='lossd';
+    desc='-3% 초과 손실 상태 → 반등 기다려 손실매도 준비';
+    priceZone = 2;
+  }
+
+  el.className = 'diff-display ' + cls;
+  el.innerHTML = `
+    <div class="diff-pct ${pctCls}">${diffStr}</div>
+    <div class="diff-meta">
+      평단 ${avg.toLocaleString()}원 · 현재가 ${cur.toLocaleString()}원
+      <div class="diff-zone ${zoneCls}">${zone} — ${desc}</div>
+    </div>`;
+  btn.disabled = false;
+}
+
+function goStep2() {
+  if (priceZone === null) return;
+  state.p = priceZone;
+  document.getElementById('step1').classList.remove('visible');
+  const s2 = document.getElementById('step2');
+  s2.classList.add('visible');
+  setDots(2, 2);
+}
+
+/* ── Step 3: Flow ── */
+function pickFlow(val) {
+  state.f = val;
+  document.querySelectorAll('#step2 .opt').forEach((o,i) => o.classList.toggle('selected', i===val));
+  setTimeout(showResult, 200);
+}
+
+/* ── Result ── */
+const MAP = {
+  '0,0,0':{a:'B — 분할매수 + C 드리블',b:'buy',s:'비중 가볍고 수익권, 상승 중. B로 비중 채우면서 수익매도 드리블 병행.',w:'비중 부족 → 매수 우선 / 수익권 → 드리블 기회'},
+  '0,0,1':{a:'B — 소량 분할매수',b:'buy',s:'비중 가볍고 수익권, 횡보. 소량씩 채워가며 방향성 확인.',w:'비중 부족 → 채우기 우선. 횡보라 서두를 필요 없음'},
+  '0,0,2':{a:'C — 수익매도 우선',b:'sell',s:'비중 가볍고 수익권인데 하락 시작. 수익 먼저 확정하고 이후 재매수.',w:'하락 흐름에서 수익권 = C 실행 타이밍'},
+  '0,1,0':{a:'B — 소량 워밍업 진입',b:'buy',s:'비중 가볍고 보합권, 상승. 소량 1~2% 워밍업 진입. 평단 변화 먼저 계산.',w:'비중 부족 + 상승 흐름 → 1번 박스 워밍업 타이밍'},
+  '0,1,1':{a:'A — 관찰',b:'watch',s:'비중 가볍고 보합권, 횡보. 방향성 나올 때까지 기다리기.',w:'보합 + 횡보 → 판단 근거 부족. 쉬기'},
+  '0,1,2':{a:'A — 관찰',b:'watch',s:'비중 가볍고 보합권, 하락. 진입 서두르지 않기. 하락 멈추는 신호 확인 후.',w:'하락 중 진입 타이밍 신중하게'},
+  '0,2,0':{a:'B — 추매 or C — 손실매도',b:'buy',s:'비중 가볍고 손실권, 반등 중. 평단 낮아지면 B 소량 추매. 되돌림 30~50% 도달하면 C 손실매도 1% 가능.',w:'반등 = B 추매 + C 손실매도 병행 가능한 자리'},
+  '0,2,1':{a:'A — 관찰',b:'watch',s:'비중 가볍고 손실권, 횡보. 추매 금지. 방향성 나올 때까지 대기.',w:'손실권 + 횡보 → 추매해봤자 평단 소폭 변화'},
+  '0,2,2':{a:'A — 관찰',b:'watch',s:'비중 가볍고 손실권, 하락 중. 추매 자제. 더 내려가는 걸 받을 준비.',w:'하락 중 추매 = 바로 손실 확대 위험'},
+
+  '1,0,0':{a:'C — 수익매도',b:'sell',s:'적정 비중, 수익권, 상승. 기존 원칙대로 최소 1% 수익매도 실행.',w:'수익권 +1% 이상 → 최소 1% 매도 원칙 적용'},
+  '1,0,1':{a:'C — 수익매도',b:'sell',s:'적정 비중, 수익권, 횡보. 수익 확정 우선. 기계적으로 매도.',w:'수익권이면 횡보여도 C 실행. 욕심 내지 않기'},
+  '1,0,2':{a:'C — 수익매도 서두르기',b:'sell',s:'적정 비중, 수익권, 하락 시작. 지금 안 팔면 수익 증발. C 빠르게.',w:'하락 흐름에서 수익권 = C 즉시 실행'},
+  '1,1,0':{a:'A — 관찰 또는 B — 소량',b:'watch',s:'적정 비중, 보합권, 상승. 수익권 +1% 진입 확인 후 C. 아직이면 소량 B or 관망.',w:'보합권은 아직 판단 시점 아님. 수익권 진입 기다리기'},
+  '1,1,1':{a:'A — 관찰',b:'watch',s:'적정 비중, 보합권, 횡보. 비중도 적정, 애매한 상황. 오늘은 쉰다.',w:'보합 + 횡보 = 행동 근거 없음'},
+  '1,1,2':{a:'A — 관찰',b:'watch',s:'적정 비중, 보합권, 하락. 추매 금지. 손절도 서두르지 않음. 지켜보기.',w:'보합권에서 하락 = 아직 판단 이른 시점'},
+  '1,2,0':{a:'B — 소량 추매 + C — 손실매도',b:'buy',s:'적정 비중, 손실권, 반등 중. 평단 낮아지면 B 소량. 되돌림 30~50% 도달하면 C 손실매도 1~2%.',w:'반등 = 추매 + 손실매도 병행 타이밍'},
+  '1,2,1':{a:'A — 관찰',b:'watch',s:'적정 비중, 손실권, 횡보. 무작정 추매 금지. 반등 신호 올 때까지 대기.',w:'손실권 + 횡보 → 행동 타이밍 아님'},
+  '1,2,2':{a:'A — 관찰',b:'watch',s:'적정 비중, 손실권, 하락 중. 추매 금지. 반등 신호 나오면 C 손실매도 준비.',w:'하락 중 추매 = 엇박 위험'},
+
+  '2,0,0':{a:'C — 수익매도 적극적으로',b:'sell',s:'기준비중 도달, 수익권, 상승. 비중 다이어트 최적 타이밍. 기계적으로 C 실행.',w:'비중 25~30% + 수익 + 상승 = 드리블 최적'},
+  '2,0,1':{a:'C — 수익매도',b:'sell',s:'기준비중 도달, 수익권, 횡보. 횡보여도 수익권이면 C.',w:'수익권 원칙 적용. 비중 관리 병행'},
+  '2,0,2':{a:'C — 수익매도 즉시',b:'sell',s:'기준비중, 수익권, 하락 시작. 지금이 마지막 타이밍. C 빠르게.',w:'하락 시작 + 수익권 = 매도 지금'},
+  '2,1,0':{a:'A — 관찰',b:'watch',s:'기준비중, 보합권, 상승. 수익권 +1% 진입 확인 후 C. 그 전까지 대기.',w:'보합권에서 상승 = 수익권 진입 기다리기'},
+  '2,1,1':{a:'A — 관찰',b:'watch',s:'기준비중, 보합권, 횡보. 뭔가 하고 싶어도 오늘은 A.',w:'보합 + 횡보 = 행동 근거 없음'},
+  '2,1,2':{a:'A — 관찰',b:'watch',s:'기준비중, 보합권, 하락. 추매 금지. 관망.',w:'보합권에서 하락 = 판단 이른 시점'},
+  '2,2,0':{a:'C — 손실매도 1% 준비',b:'sell',s:'기준비중 도달, 손실권, 반등 중. 되돌림 30~50% 기준으로 C 손실매도 1~2% 실행.',w:'비중 25~30% + 반등 = 손실 다이어트 타이밍'},
+  '2,2,1':{a:'A — 관찰, 반등 대기',b:'watch',s:'기준비중, 손실권, 횡보. 반등 기다리는 중. 추매 금지.',w:'손실권 + 횡보 = 행동 타이밍 아님'},
+  '2,2,2':{a:'A — 관찰',b:'watch',s:'기준비중, 손실권, 하락. 하락 중 추매 금지. 반등 신호까지 대기.',w:'하락 중은 C 손실매도도 쉽지 않음. 반등 후 실행'},
+
+  '3,0,0':{a:'C — 수익매도 + 비중 다이어트',b:'sell',s:'과비중, 수익권, 상승. 최고의 타이밍. 2~3% 이상 매도해서 비중 30% 이하로.',w:'과비중 + 수익 + 상승 = 비중 다이어트 최적 조건'},
+  '3,0,1':{a:'C — 수익매도',b:'sell',s:'과비중, 수익권, 횡보. 횡보여도 과비중이면 반드시 C.',w:'과비중 상태에서 수익권 = 무조건 C'},
+  '3,0,2':{a:'C — 수익매도 즉시',b:'sell',s:'과비중, 수익권, 하락 시작. 지금 이 순간이 팔 기회. 즉시 C.',w:'하락 시작 + 과비중 + 수익 = 매도 마지막 타이밍'},
+  '3,1,0':{a:'C — 매도 + 비중 관리',b:'sell',s:'과비중, 보합권, 상승. 비중 초과 상태면 보합권이어도 C 고려.',w:'과비중은 보합권이어도 비중 줄이는 게 먼저'},
+  '3,1,1':{a:'A — 관찰, 반등 대기',b:'warn',s:'과비중, 보합권, 횡보. 반등 나올 때까지 대기. 추매 금지.',w:'과비중 + 보합 + 횡보 = 타이밍 아님'},
+  '3,1,2':{a:'A — 관찰 (추매 절대 금지)',b:'warn',s:'과비중, 보합권, 하락. 추매 금지. 하락 멈추고 반등 나올 때까지 기다리기.',w:'보합권에서 하락 + 과비중 = 위험'},
+  '3,2,0':{a:'C — 손실매도 1~2% 실행',b:'sell',s:'과비중, 손실권, 반등 중. 반등 이용해 손실매도 1~2% 실행. 추매 절대 금지.',w:'과비중 → 비중 줄이기 최우선. 반등 = 손실매도 타이밍'},
+  '3,2,1':{a:'A — 관찰, 반등 대기',b:'warn',s:'과비중, 손실권, 횡보. 반등 신호까지 대기. 추매 금지.',w:'과비중 + 손실 + 횡보 = 최악 조합. 추매하면 더 무거워짐'},
+  '3,2,2':{a:'A — 관찰 (추매 절대 금지)',b:'warn',s:'과비중, 손실권, 하락 중. 추매 절대 금지. 반등 신호 나올 때까지 대기.',w:'이 상황에서 추매 = 비중 더 무거워짐. 위험'},
+};
+
+function showResult() {
+  const key = `${state.w},${state.p},${state.f}`;
+  const r = MAP[key] || {a:'A — 관찰',b:'watch',s:'판단이 애매한 상황. 쉬는 것도 매매다.',w:'판단 근거 부족 시 기본값은 A'};
+
+  const badgeClass = {buy:'r-pill-buy',sell:'r-pill-sell',watch:'r-pill-watch',warn:'r-pill-warn'}[r.b];
+  const badgeLabel = {buy:'B 매수',sell:'C 매도',watch:'A 관찰',warn:'주의'}[r.b];
+  const cardClass  = {buy:'r-buy',sell:'r-sell',watch:'',warn:'r-warn'}[r.b];
+
+  const el = document.getElementById('result');
+  el.style.display = 'block';
+  el.innerHTML = `
+    <div class="result-card ${cardClass}">
+      <div><span class="result-pill ${badgeClass}">${badgeLabel}</span></div>
+      <div class="result-action">${r.a}</div>
+      <div class="result-sub">${r.s}</div>
+      <div class="result-why">근거 — <span>${r.w}</span></div>
+    </div>
+    <button class="reset-btn" onclick="resetAll()">← 다시 선택하기</button>`;
+
+  setDots(3, -1);
+}
+
+function resetAll() {
+  state.w = state.p = state.f = null;
+  priceZone = null;
+
+  document.getElementById('avg-price').value = '';
+  document.getElementById('cur-price').value = '';
+  document.getElementById('diff-display').className = 'diff-display';
+  document.getElementById('diff-display').innerHTML = '<span class="placeholder-text">위에 숫자를 입력하면 자동 계산됩니다</span>';
+  document.getElementById('next-btn').disabled = true;
+
+  ['step0','step1','step2'].forEach((id,i) => {
+    const el = document.getElementById(id);
+    el.className = 'step' + (i===0 ? ' visible' : '');
+    el.querySelectorAll('.opt').forEach(o => o.classList.remove('selected'));
+  });
+
+  document.getElementById('result').style.display = 'none';
+  setDots(0, 0);
+}
+
+/* ── Retrace ── */
+function calcRetrace() {
+  const high = parseFloat(document.getElementById('c-high').value) || 0;
+  const low  = parseFloat(document.getElementById('c-low').value)  || 0;
+  const dropEl = document.getElementById('c-drop');
+  const resEl  = document.getElementById('c-result');
+
+  if (high <= low || low <= 0) {
+    dropEl.textContent = '고점이 저점보다 커야 합니다';
+    resEl.innerHTML = '';
+    return;
+  }
+
+  const drop = high - low;
+  const dropPct = ((drop / high) * 100).toFixed(1);
+  dropEl.textContent = `하락폭 ${drop.toLocaleString()}원 · 고점 대비 ${dropPct}% 하락`;
+
+  const levels = [
+    {pct:30, desc:'최소 반등 신호\n1% 소량 손실매도 가능'},
+    {pct:50, desc:'땡큐 구간\n1~2% 손실매도 적극 실행'},
+    {pct:75, desc:'추세전환 시도\n손실매도 + 수익매도 병행'},
+  ];
+
+  resEl.innerHTML = levels.map(l => {
+    const price = Math.round(low + drop * l.pct / 100);
+    return `<div class="retrace-card">
+      <div class="retrace-pct">${l.pct}% 되돌림</div>
+      <div class="retrace-price">${price.toLocaleString()}원</div>
+      <div class="retrace-desc">${l.desc}</div>
+    </div>`;
+  }).join('');
+}
+
+calcRetrace();
+</script>
+</body>
+</html>
